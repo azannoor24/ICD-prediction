@@ -79,14 +79,14 @@ except ImportError:
 # CONFIG
 # ─────────────────────────────────────────────────────────────────────────────
 
-DEFAULT_CSV          = "ICD10codes.csv"
+DEFAULT_CSV          = "data/ICD10codes.csv"
 EMBED_MODEL          = "neuml/pubmedbert-base-embeddings"
 EMBED_MODEL_FALLBACK = "all-MiniLM-L6-v2"
 
-FAISS_INDEX_FILE     = "icd_stage1.faiss"
-FAISS_RECORDS_FILE   = "icd_stage1_records.json"
-FAISS_FULL_FILE      = "icd_full.faiss"
-FAISS_FULL_REC_FILE  = "icd_full_records.json"
+FAISS_INDEX_FILE     = "data/icd_stage1.faiss"
+FAISS_RECORDS_FILE   = "data/icd_stage1_records.json"
+FAISS_FULL_FILE      = "data/icd_full.faiss"
+FAISS_FULL_REC_FILE  = "data/icd_full_records.json"
 
 MAX_SECONDARY        = 999
 FUZZY_TOP_K          = 10
@@ -1971,7 +1971,7 @@ def print_result(result: dict, report_preview: str = "") -> None:
         print(f"  Uncertain: {meta['llm_uncertainty'][:100]}")
 
 
-DEMO_REPORT = """
+DEMO_REPORT = Path("utils/report.txt").read_text(encoding="utf-8") if Path("utils/report.txt").exists() else """
 DISCHARGE SUMMARY — Mark Brunk
 
 Reason for Admission: Acute on chronic respiratory failure with hypoxia [J96.21]
@@ -2115,8 +2115,8 @@ Examples:
                         help="Multiple patient files — merged into one prediction")
     parser.add_argument("--evaluate",      action="store_true",
                         help="Run LLM2 evaluation/verification of predicted codes")
-    parser.add_argument("--output",        type=str, default="prediction.json",
-                        help="Output JSON path (default: prediction.json)")
+    parser.add_argument("--output",        type=str, default="results/prediction.json",
+                        help="Output JSON path (default: results/prediction.json)")
     parser.add_argument("--csv",           type=str, default=DEFAULT_CSV)
     parser.add_argument("--backend",       type=str, default="gemini",
                         choices=["gemini", "openai", "embedding"])

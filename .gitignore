@@ -26,3 +26,7 @@ models/checkpoints/
 temp.md
 *.pdf
 *.txt
+
+# Keep data folder locally but don't track large files
+data/*
+!data/*.csv

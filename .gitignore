@@ -1,0 +1,28 @@
+.env
+*.pyc
+__pycache__/
+.DS_Store
+*.egg-info/
+dist/
+build/
+
+# Results and outputs
+results/
+logs/
+
+# Data files - ignore all except CSV
+data/*
+!data/*.csv
+
+# Large files
+*.faiss
+*.index
+*.json
+
+# Model checkpoints
+models/checkpoints/
+
+# Temporary files
+temp.md
+*.pdf
+*.txt

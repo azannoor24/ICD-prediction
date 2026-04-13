@@ -86,4 +86,4 @@ python icd.py --rebuild-cache --backend gemini
 - `data/*.json` - FAISS records
 - `results/` - All output files
 - `logs/` - Application logs
-- `models/checkpoints/` - Model files
+- `models/checkpoints/` - Model file

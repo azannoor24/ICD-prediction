@@ -3,7 +3,7 @@ FROM node:18 AS frontend-builder
 WORKDIR /app
 COPY frontend/ ./frontend/
 WORKDIR /app/frontend
-RUN npm ci
+RUN npm install --legacy-peer-deps
 RUN npm run build
 
 # Python runtime

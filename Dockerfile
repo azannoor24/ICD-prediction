@@ -24,10 +24,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy backend code
 COPY app.py .
 COPY icd.py .
-COPY .env .
 
-# Copy data and utils
+# Copy data folder (required)
 COPY data/ data/
+
+# Copy utils folder (for demo report)
 COPY utils/ utils/
 
 # Copy built frontend from builder stage

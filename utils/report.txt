@@ -1,0 +1,26 @@
+INPATIENT PSYCHIATRIC + MEDICAL DISCHARGE NOTE
+Marcus D, 41M, brought in by police after erratic behavior at work. Coworkers noted
+pt had been "not sleeping for days", spending large amounts of money, speaking rapidly,
+and making "grandiose statements" about a business empire.
+
+Pt denies sx, states he "feels amazing" and doesn't need help. Strong FH of bipolar (mother).
+Last hospitalization: 2022, similar presentation. On lithium previously but "stopped
+taking it because side effects."
+
+MSE: expansive affect, pressured speech, flight of ideas, grandiosity, limited insight.
+PHQ-9 not applicable (manic presentation).
+
+Medical workup: TSH 1.9 (normal), CBC wnl, BMP wnl, lithium level <0.1 (essentially nil).
+ETOH screen neg. Urine tox: positive cannabis (pt reports "recreational, occasional").
+ECG: normal sinus, QTc 432ms.
+
+Dx: Bipolar I, manic episode, severe, without psychotic features.
+(Note: Prior episode 2022 also diagnosed as bipolar I manic.)
+
+Tx: lithium restarted 300mg TID with titration plan, olanzapine 5mg QHS added for
+acute sx control. Sleep improved by day 3. Insight partially improved at discharge.
+
+Discharge plan: outpt psychiatry in 1 week, lithium level check in 5 days.
+Cannabis use discussed — counseled re: interaction w/ mood stabilizers.
+
+Comorbid: Mild obesity (BMI 32.1), no other active medical conditions.

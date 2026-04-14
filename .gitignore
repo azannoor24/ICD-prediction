@@ -29,6 +29,7 @@ temp.md
 *.pdf
 *.txt
 !utils/report.txt
+!requirements.txt
 
 # Frontend
 frontend/node_modules/

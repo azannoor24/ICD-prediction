@@ -1,11 +1,3 @@
-# Build stage for frontend
-FROM node:18-alpine AS frontend-builder
-WORKDIR /app
-COPY . .
-WORKDIR /app/frontend
-RUN npm install
-RUN npm run build
-
 # Python runtime
 FROM python:3.11-slim
 WORKDIR /app
@@ -31,8 +23,8 @@ COPY data/ data/
 # Copy utils folder (for demo report)
 COPY utils/ utils/
 
-# Copy built frontend from builder stage
-COPY --from=frontend-builder /app/frontend/dist frontend/dist
+# Copy pre-built frontend
+COPY frontend/dist frontend/dist
 
 # Create necessary directories
 RUN mkdir -p uploads results logs

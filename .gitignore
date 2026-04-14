@@ -20,6 +20,8 @@ data/*
 *.faiss
 *.index
 *.json
+!frontend/package.json
+!frontend/package-lock.json
 
 # Model checkpoints
 models/checkpoints/

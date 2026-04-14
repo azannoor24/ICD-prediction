@@ -1,0 +1,7 @@
+{
+  "buildCommand": "pip install -r requirements.txt",
+  "devCommand": "python app.py",
+  "installCommand": "pip install --upgrade pip && pip install -r requirements.txt",
+  "framework": null,
+  "outputDirectory": "frontend/dist"
+}

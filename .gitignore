@@ -28,6 +28,7 @@ models/checkpoints/
 temp.md
 *.pdf
 *.txt
+!utils/report.txt
 
 # Frontend
 frontend/node_modules/

@@ -1,7 +1,7 @@
 # Build stage for frontend
 FROM node:18-alpine AS frontend-builder
 WORKDIR /app
-COPY frontend/ ./frontend/
+COPY . .
 WORKDIR /app/frontend
 RUN npm install
 RUN npm run build

@@ -10,6 +10,7 @@ build/
 # Results and outputs
 results/
 logs/
+uploads/
 
 # Data files - ignore all except CSV
 data/*
@@ -28,6 +29,9 @@ temp.md
 *.pdf
 *.txt
 
-# Keep data folder locally but don't track large files
-data/*
-!data/*.csv
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.*.local
+

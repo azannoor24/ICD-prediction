@@ -1,3 +1,11 @@
+# Build stage for frontend
+FROM node:18 AS frontend-builder
+WORKDIR /app
+COPY frontend/ ./frontend/
+WORKDIR /app/frontend
+RUN npm ci
+RUN npm run build
+
 # Python runtime
 FROM python:3.11-slim
 WORKDIR /app
@@ -23,8 +31,8 @@ COPY data/ data/
 # Copy utils folder (for demo report)
 COPY utils/ utils/
 
-# Copy pre-built frontend
-COPY frontend/dist frontend/dist
+# Copy built frontend from builder stage
+COPY --from=frontend-builder /app/frontend/dist frontend/dist
 
 # Create necessary directories
 RUN mkdir -p uploads results logs

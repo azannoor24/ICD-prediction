@@ -1,55 +1,47 @@
 # Build stage for frontend
-FROM node:18-slim AS frontend-builder
+FROM node:18-alpine AS frontend-builder
 WORKDIR /app/frontend
-
-# Copy package files
 COPY frontend/package.json frontend/package-lock.json ./
-
-# Install dependencies with verbose logging
-RUN npm install --legacy-peer-deps --loglevel verbose || \
-    (echo "npm install failed, trying without package-lock" && \
-     rm -f package-lock.json && \
-     npm install --legacy-peer-deps)
-
-# Copy source files
+RUN npm ci
 COPY frontend/ ./
+RUN npm run build && rm -rf node_modules
 
-# Build
-RUN npm run build
-
-# Python runtime
+# Python runtime - use slim Debian
 FROM python:3.11-slim
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Install minimal system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
-    libsm6 \
-    libxext6 \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
 # Copy Python requirements
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend code
-COPY app.py .
-COPY icd.py .
+# Install Python packages and clean up in one layer
+RUN pip install --no-cache-dir -r requirements.txt && \
+    rm -rf /root/.cache/pip && \
+    find /usr/local/lib/python3.11 -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true && \
+    find /usr/local/lib/python3.11 -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 
-# Copy data folder (required)
-COPY data/ data/
+# Copy only necessary backend files
+COPY app.py icd.py ./
 
-# Copy utils folder (for demo report)
+# Copy only CSV data (not FAISS indices)
+COPY data/*.csv data/
+
+# Copy utils
 COPY utils/ utils/
 
-# Copy built frontend from builder stage
+# Copy built frontend
 COPY --from=frontend-builder /app/frontend/dist frontend/dist
 
-# Create necessary directories
+# Create directories
 RUN mkdir -p uploads results logs
 
 # Expose port
 EXPOSE 5000
 
 # Run with gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--timeout", "120", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--timeout", "120", "--workers", "1", "app:app"]

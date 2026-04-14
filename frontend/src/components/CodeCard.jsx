@@ -69,13 +69,13 @@ export default function CodeCard({ code, isPrimary, index }) {
           </div>
         )}
 
-        {code.long_desc && (
+        {code.reasoning && (
           <div>
             <p className="text-gray-400 text-xs uppercase tracking-wide mb-1">
-              Long Description
+              Reason
             </p>
             <p className="text-gray-200 text-sm leading-relaxed">
-              {code.long_desc}
+              {code.reasoning}
             </p>
           </div>
         )}

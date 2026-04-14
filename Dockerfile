@@ -1,9 +1,20 @@
 # Build stage for frontend
-FROM node:18 AS frontend-builder
-WORKDIR /app
-COPY frontend/ ./frontend/
+FROM node:18-slim AS frontend-builder
 WORKDIR /app/frontend
-RUN npm install --legacy-peer-deps
+
+# Copy package files
+COPY frontend/package.json frontend/package-lock.json ./
+
+# Install dependencies with verbose logging
+RUN npm install --legacy-peer-deps --loglevel verbose || \
+    (echo "npm install failed, trying without package-lock" && \
+     rm -f package-lock.json && \
+     npm install --legacy-peer-deps)
+
+# Copy source files
+COPY frontend/ ./
+
+# Build
 RUN npm run build
 
 # Python runtime

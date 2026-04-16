@@ -8,6 +8,9 @@ export default function UploadSection({ onResultsChange, loading, setLoading }) 
   const [files, setFiles] = useState([])
   const [dragActive, setDragActive] = useState(false)
   const [progress, setProgress] = useState(0)
+  const [currentStage, setCurrentStage] = useState('')
+  const [estimatedTime, setEstimatedTime] = useState(0)
+  const [startTime, setStartTime] = useState(null)
   const fileInputRef = useRef(null)
 
   const handleDrag = (e) => {
@@ -50,6 +53,14 @@ export default function UploadSection({ onResultsChange, loading, setLoading }) 
 
     setLoading(true)
     setProgress(0)
+    setCurrentStage('Uploading...')
+    setStartTime(Date.now())
+    
+    // Estimate time based on file count and size
+    const totalSize = files.reduce((sum, file) => sum + file.size, 0)
+    const estimatedSeconds = Math.max(15, Math.min(120, 10 + files.length * 8 + (totalSize / (1024 * 1024)) * 2))
+    setEstimatedTime(estimatedSeconds)
+    
     const toastId = toast.loading(`Processing ${files.length} file(s)...`)
 
     try {
@@ -58,27 +69,63 @@ export default function UploadSection({ onResultsChange, loading, setLoading }) 
         formData.append('files', file)
       })
 
-      // Simulate progress updates
+      // Realistic progress simulation with stages
+      const stages = [
+        { name: 'Uploading files...', duration: 0.1, progress: 10 },
+        { name: 'Extracting text...', duration: 0.25, progress: 35 },
+        { name: 'Analyzing with AI...', duration: 0.35, progress: 70 },
+        { name: 'Verifying codes...', duration: 0.2, progress: 90 },
+        { name: 'Finalizing...', duration: 0.1, progress: 95 }
+      ]
+
+      let currentStageIndex = 0
       const progressInterval = setInterval(() => {
+        const elapsed = (Date.now() - startTime) / 1000
+        const progressRatio = Math.min(elapsed / estimatedSeconds, 0.95)
+        
+        // Update stage based on progress
+        for (let i = 0; i < stages.length; i++) {
+          if (progressRatio * 100 <= stages[i].progress) {
+            if (currentStageIndex !== i) {
+              currentStageIndex = i
+              setCurrentStage(stages[i].name)
+            }
+            break
+          }
+        }
+        
+        // Smooth progress that never exceeds 95% until complete
+        const targetProgress = progressRatio * 95
         setProgress((prev) => {
-          if (prev >= 90) return prev
-          return prev + Math.random() * 30
+          const increment = (targetProgress - prev) * 0.3
+          return Math.min(95, prev + increment)
         })
-      }, 500)
+      }, 300)
 
       const response = await axios.post('/api/predict', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
 
       clearInterval(progressInterval)
+      setCurrentStage('Complete!')
       setProgress(100)
 
       onResultsChange(response.data)
       toast.success('Prediction complete!', { id: toastId })
-      setFiles([])
-      setProgress(0)
+      
+      // Reset after a short delay
+      setTimeout(() => {
+        setFiles([])
+        setProgress(0)
+        setCurrentStage('')
+        setEstimatedTime(0)
+        setStartTime(null)
+      }, 1000)
     } catch (error) {
       setProgress(0)
+      setCurrentStage('')
+      setEstimatedTime(0)
+      setStartTime(null)
       toast.error(error.response?.data?.error || 'Prediction failed', { id: toastId })
     } finally {
       setLoading(false)
@@ -205,21 +252,28 @@ export default function UploadSection({ onResultsChange, loading, setLoading }) 
             className="mt-6 space-y-3"
           >
             <div className="flex items-center justify-between">
-              <p className="text-white font-semibold text-sm">Processing...</p>
+              <p className="text-white font-semibold text-sm">{currentStage}</p>
               <p className="text-pink-400 font-bold text-sm">{Math.round(progress)}%</p>
             </div>
             <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden border border-white/20">
               <motion.div
                 className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.3 }}
+                style={{ width: `${Math.min(100, progress)}%` }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
               ></motion.div>
             </div>
-            <div className="flex gap-2 text-xs text-gray-400">
-              <span>⏱️ Extracting codes...</span>
-              <span>🔍 Verifying...</span>
-              <span>✨ Finalizing...</span>
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex gap-3 text-gray-400">
+                <span className={progress >= 10 ? 'text-purple-300' : ''}>📤 Upload</span>
+                <span className={progress >= 35 ? 'text-purple-300' : ''}>📄 Extract</span>
+                <span className={progress >= 70 ? 'text-purple-300' : ''}>🤖 Analyze</span>
+                <span className={progress >= 90 ? 'text-purple-300' : ''}>✅ Verify</span>
+              </div>
+              {estimatedTime > 0 && progress < 95 && (
+                <span className="text-gray-400">
+                  ~{Math.max(0, Math.round(estimatedTime * (1 - progress / 100)))}s remaining
+                </span>
+              )}
             </div>
           </motion.div>
         )}

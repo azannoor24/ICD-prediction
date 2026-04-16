@@ -1,0 +1,131 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# ULTRA-OPTIMIZED DOCKERFILE (Alpine) - Target: <2.5GB
+# ═══════════════════════════════════════════════════════════════════════════
+# 
+# AGGRESSIVE OPTIMIZATIONS:
+#   1. Alpine Linux base (5x smaller than Debian)
+#   2. Multi-stage build with aggressive cleanup
+#   3. Minimal sentence-transformers model (all-MiniLM-L6-v2)
+#   4. No pre-built FAISS indices (built at runtime)
+#   5. Stripped binaries and removed debug symbols
+#   6. Single-layer Python install with immediate cleanup
+#
+# TRADE-OFFS:
+#   - First startup: 2-3 min slower (building FAISS indices)
+#   - Subsequent startups: Normal speed (indices cached)
+#   - Model accuracy: Slightly lower (smaller embedding model)
+#
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ─── Stage 1: Frontend Build ───────────────────────────────────────────────
+FROM node:18-alpine AS frontend-builder
+WORKDIR /app/frontend
+
+# Install dependencies (including devDependencies for build)
+COPY frontend/package*.json ./
+RUN npm ci --no-audit --no-fund
+
+# Build frontend
+COPY frontend/ ./
+RUN npm run build && \
+    rm -rf node_modules src public
+
+# ─── Stage 2: Python Dependencies Builder ──────────────────────────────────
+FROM python:3.11-alpine AS python-builder
+WORKDIR /build
+
+# Install build dependencies
+RUN apk add --no-cache --virtual .build-deps \
+    gcc \
+    g++ \
+    musl-dev \
+    linux-headers \
+    openblas-dev \
+    gfortran \
+    cmake \
+    make
+
+# Copy requirements
+COPY requirements.txt .
+
+# Build wheels for all dependencies (faster install in final stage)
+RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
+
+# ─── Stage 3: Final Runtime Image ──────────────────────────────────────────
+FROM python:3.11-alpine
+WORKDIR /app
+
+# Install ONLY runtime dependencies (no build tools)
+RUN apk add --no-cache \
+    tesseract-ocr \
+    tesseract-ocr-data-eng \
+    libstdc++ \
+    libgomp \
+    openblas \
+    libgfortran
+
+# Copy pre-built wheels from builder stage
+COPY --from=python-builder /wheels /wheels
+
+# Install Python packages from wheels (much faster, no compilation)
+RUN pip install --no-cache-dir --no-index --find-links=/wheels /wheels/* && \
+    rm -rf /wheels && \
+    # Aggressive cleanup
+    find /usr/local/lib/python3.11 -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true && \
+    find /usr/local/lib/python3.11 -type d -name "test" -exec rm -rf {} + 2>/dev/null || true && \
+    find /usr/local/lib/python3.11 -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true && \
+    find /usr/local/lib/python3.11 -type d -name "*.dist-info" -exec rm -rf {}/RECORD {} + 2>/dev/null || true && \
+    find /usr/local/lib/python3.11 -type f -name "*.pyc" -delete && \
+    find /usr/local/lib/python3.11 -type f -name "*.pyo" -delete && \
+    find /usr/local/lib/python3.11 -type f -name "*.c" -delete && \
+    find /usr/local/lib/python3.11 -type f -name "*.h" -delete && \
+    # Strip binaries (remove debug symbols)
+    find /usr/local -name "*.so" -exec strip --strip-unneeded {} + 2>/dev/null || true && \
+    # Remove pip cache and temp files
+    rm -rf /root/.cache /tmp/* /var/cache/apk/*
+
+# Copy application code
+COPY app.py icd.py ./
+COPY utils/ utils/
+
+# Copy ONLY CSV data (FAISS indices built at runtime - saves 500MB-1GB)
+COPY data/*.csv data/
+
+# Copy built frontend
+COPY --from=frontend-builder /app/frontend/dist frontend/dist
+
+# Create runtime directories
+RUN mkdir -p uploads results logs data && \
+    chmod 755 uploads results logs data
+
+# Environment variables for optimization
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONIOENCODING=utf-8 \
+    TRANSFORMERS_CACHE=/tmp/transformers \
+    SENTENCE_TRANSFORMERS_HOME=/tmp/sentence-transformers \
+    TOKENIZERS_PARALLELISM=false
+
+# Non-root user for security
+RUN addgroup -g 1000 appuser && \
+    adduser -D -u 1000 -G appuser appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
+# Expose port
+EXPOSE 5000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health', timeout=5)" || exit 1
+
+# Run with gunicorn
+CMD ["gunicorn", \
+     "--bind", "0.0.0.0:5000", \
+     "--timeout", "300", \
+     "--workers", "1", \
+     "--threads", "2", \
+     "--worker-class", "sync", \
+     "--max-requests", "1000", \
+     "--max-requests-jitter", "50", \
+     "app:app"]

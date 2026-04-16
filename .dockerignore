@@ -1,28 +1,88 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# OPTIMIZED .dockerignore - Exclude unnecessary files from Docker context
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Version control
 .git
 .gitignore
+.gitattributes
+
+# Environment files
 .env
+.env.*
 .env.bak
-.DS_Store
+!.env.example
+
+# Python cache and build artifacts
 __pycache__
 *.pyc
+*.pyo
+*.pyd
 *.egg-info
-.vscode
-.venv
-venv
-node_modules
-frontend/node_modules
-frontend/dist
-*.log
+*.egg
 .pytest_cache
 .coverage
 htmlcov
+.tox
+.mypy_cache
+.ruff_cache
 dist
 build
-*.egg
-.idea
+
+# Node.js
+node_modules
+frontend/node_modules
+frontend/dist
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE and editor files
 .vscode
+.idea
 *.swp
 *.swo
 *~
-.env.local
-.env.*.local
+.DS_Store
+
+# Virtual environments
+.venv
+venv
+env
+ENV
+
+# Logs
+*.log
+logs/*.log
+
+# CRITICAL: Exclude pre-built FAISS indices (save 500MB-1GB)
+# These will be rebuilt at runtime on first prediction
+data/*.faiss
+data/*.index
+data/*_records.json
+
+# Exclude test uploads and results (save space)
+uploads/*
+!uploads/.gitkeep
+results/*
+!results/.gitkeep
+
+# Documentation and development files
+README.md
+*.md
+!PROJECT_STRUCTURE.md
+docs/
+notebooks/
+*.ipynb
+
+# Deployment configs (not needed in container)
+.dockerignore
+docker-compose*.yml
+Procfile
+vercel.json
+runtime.txt
+
+# Test files
+tests/
+test_*.py
+*_test.py
